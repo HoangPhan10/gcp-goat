@@ -1,0 +1,1 @@
+Create bucket `my-bucket-dev-tf-asia` before when run `terraform apply`
