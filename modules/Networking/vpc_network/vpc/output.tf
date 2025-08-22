@@ -2,13 +2,8 @@ output "vpc_network_self_link" {
   value = google_compute_network.vpc_network.self_link
 }
 
-output "private_subnet_app_self_link" {
-  description = "The self-link of the private-subnet-app"
-  value       = google_compute_subnetwork.subnets["private-subnet-app"].self_link
-}
-output "private_subnet_app_self_link_secondary" {
-  description = "The self-link of the private-subnet-app"
-  value       = google_compute_subnetwork.subnets["private-subnet-app-secondary"].self_link
+output "vpc_name" {
+  value = google_compute_network.vpc_network.name
 }
 
 output "subnets_self_links" {

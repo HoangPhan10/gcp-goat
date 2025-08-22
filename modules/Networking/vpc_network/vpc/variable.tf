@@ -13,10 +13,18 @@ variable "vpc_subnets" {
   }))
 }
 
-variable "vpc_subnets_proxy" {
-  type = map(object({
-    proxy_only_subnet_name = string
-    proxy_only_subnet_cidr = string
-    region                 = string
-  }))
-}
+# variable "vpc_subnets_proxy" {
+#   type = map(object({
+#     proxy_only_subnet_name = string
+#     proxy_only_subnet_cidr = string
+#     region                 = string
+#   }))
+# }
+
+# variable "vpc_connector" {
+#   type = object({
+#     name          = string
+#     region        = string
+#     ip_cidr_range = string
+#   })
+# }

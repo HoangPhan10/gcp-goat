@@ -24,6 +24,10 @@ resource "google_cloud_run_service" "cloud_run_service" {
             }
           ]) : null
         )
+        # "run.googleapis.com/vpc-access-connector" = (
+        #   (each.value.vpc_network != null && each.value.vpc_subnetwork != null) ?
+        #   each.value.vpc_connector : null
+        # )
         "run.googleapis.com/vpc-access-egress" = (
           (each.value.vpc_network != null && each.value.vpc_subnetwork != null) ?
           coalesce(each.value.vpc_egress, "private-ranges-only") : null
@@ -49,7 +53,7 @@ resource "google_cloud_run_service" "cloud_run_service" {
         args    = try(each.value.args, null)
         resources {
           limits = {
-            memory = "1Gi"
+            memory = "2Gi"
             cpu    = "1"
           }
         }
@@ -64,11 +68,20 @@ resource "google_cloud_run_service" "cloud_run_service" {
   }
 }
 
-resource "google_cloud_run_service_iam_member" "unauthenticated" {
-  for_each = var.cloud_run_services
+data "google_iam_policy" "noauth" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "allUsers",
+    ]
+  }
+}
 
-  service  = google_cloud_run_service.cloud_run_service[each.key].name
+resource "google_cloud_run_service_iam_policy" "noauth" {
+  depends_on = [ google_cloud_run_service.cloud_run_service ]
+  for_each = var.cloud_run_services
   location = each.value.region
-  role     = "roles/run.invoker"
-  member   = "allUsers"
+  service  = each.value.name
+
+  policy_data = data.google_iam_policy.noauth.policy_data
 }

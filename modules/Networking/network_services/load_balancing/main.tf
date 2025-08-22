@@ -1,5 +1,5 @@
 resource "google_compute_region_network_endpoint_group" "cloudrun_neg_web" {
-  for_each = var.external_cloud_run_neg_web
+  for_each = var.alb_region.external_cloud_run_neg_web
 
   name                  = each.value.name
   network_endpoint_type = "SERVERLESS"
@@ -15,13 +15,13 @@ resource "google_compute_global_address" "lb_app" {
 }
 
 resource "google_compute_backend_service" "cloudrun_backends" {
-  for_each = var.external_backend_services_config
+  for_each = var.alb_region.external_backend_services_config
 
   name                  = each.key
   port_name             = each.value.port_name
   protocol              = "HTTP"
   timeout_sec           = 30
-  load_balancing_scheme = var.external_load_balancing_scheme_web
+  load_balancing_scheme = var.alb_region.external_load_balancing_scheme_web
   locality_lb_policy    = "ROUND_ROBIN"
 
   # health_checks = [ var.hc_name_external_alb_id ]
@@ -41,12 +41,12 @@ resource "google_compute_backend_service" "cloudrun_backends" {
   }
 }
 resource "google_compute_url_map" "url_map" {
-  name = var.external_load_balancer_name_web
+  name = var.alb_region.external_load_balancer_name_web
 
-  default_service = google_compute_backend_service.cloudrun_backends[var.external_url_map_default_service_key].id
+  default_service = google_compute_backend_service.cloudrun_backends[var.alb_region.external_url_map_default_service_key].id
 
   dynamic "host_rule" {
-    for_each = var.external_url_map_host_rules
+    for_each = var.alb_region.external_url_map_host_rules
     content {
       hosts        = host_rule.value.hosts
       path_matcher = host_rule.value.path_matcher
@@ -54,7 +54,7 @@ resource "google_compute_url_map" "url_map" {
   }
 
   dynamic "path_matcher" {
-    for_each = { for pm in var.external_url_map_path_matchers : pm.name => pm }
+    for_each = { for pm in var.alb_region.external_url_map_path_matchers : pm.name => pm }
     content {
       name            = path_matcher.value.name
       default_service = google_compute_backend_service.cloudrun_backends[path_matcher.value.default_service_key].id
@@ -81,15 +81,15 @@ resource "google_compute_url_map" "url_map" {
   }
 }
 resource "google_compute_target_http_proxy" "http_proxy" {
-  name = "${var.external_load_balancer_name_web}-http-proxy"
+  name = "${var.alb_region.external_load_balancer_name_web}-http-proxy"
 
   url_map = google_compute_url_map.url_map.id
 }
 
 resource "google_compute_global_forwarding_rule" "http_rule" {
-  name                  = "${var.external_load_balancer_name_web}-http-fw-rule"
+  name                  = "${var.alb_region.external_load_balancer_name_web}-http-fw-rule"
   ip_protocol           = "TCP"
-  load_balancing_scheme = var.external_load_balancing_scheme_web
+  load_balancing_scheme = var.alb_region.external_load_balancing_scheme_web
   port_range            = "80"
   target                = google_compute_target_http_proxy.http_proxy.id
   ip_address            = google_compute_global_address.lb_app.id
